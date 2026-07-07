@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub-based CMS</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f6f8; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        input, textarea { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
+        button { background: #2c974b; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; width: 100%; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Админка без сервера</h2>
+    
+    <label>GitHub Токен (для авторизации):</label>
+    <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx">
+
+    <hr>
+
+    <label>Главный заголовок сайта:</label>
+    <input type="text" id="hero_title">
+
+    <label>Описание бизнеса:</label>
+    <textarea id="about_text"></textarea>
+
+    <button onclick="saveToGitHub()">Сохранить изменения</button>
+</div>
+
+<script>
+    // При загрузке страницы JS может сначала запросить текущий content.json через API,
+    // чтобы заполнить поля формы актуальными данными.
+    
+    async function saveToGitHub() {
+        const token = document.getElementById('token').value;
+        const heroTitle = document.getElementById('hero_title').value;
+        const aboutText = document.getElementById('about_text').value;
+
+        if(!token) return alert("Введите токен GitHub!");
+
+        const repoOwner = "ТВОЙ_ЛОГИН_НА_GITHUB";
+        const repoName = "ИМЯ_РЕПОЗИТОРИЯ";
+        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/content.json`;
+
+        // 1. Сначала нужно получить текущую версию (sha) файла content.json
+        const getFile = await fetch(url);
+        const fileData = await getFile.json();
+        const sha = fileData.sha;
+
+        // 2. Декодируем и обновляем старый JSON новыми данными из полей
+        let currentContent = JSON.parse(atob(fileData.content));
+        currentContent.hero_title = heroTitle;
+        currentContent.about_text = aboutText;
+
+        // 3. Отправляем обновленный файл обратно в GitHub
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: "📝 Обновление контента через admin.html",
+                content: btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2)))),
+                sha: sha
+            })
+        });
+
+        if(response.ok) {
+            alert("Готово! GitHub принял изменения. Через 20 секунд сайт обновится.");
+        } else {
+            alert("Ошибка при сохранении. Проверьте токен.");
+        }
+    }
+</script>
+</body>
+</html>
