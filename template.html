@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${meta_title}</title>
+    <meta name="description" content="${meta_description}">
+    
+    <meta property="og:title" content="${meta_title}">
+    <meta property="og:description" content="${meta_description}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="${og_site_name}">
+
+    <script type="application/ld+json">
+    ${schema_json}
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #faf8f5;
+            --text-color: #2d3748;
+            --accent-color: #2b6cb0;
+            --accent-hover: #2c5282;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1a202c;
+                --text-color: #e2e8f0;
+                --accent-color: #4299e1;
+                --accent-hover: #63b3ed;
+                --card-bg: #2d3748;
+                --border-color: #4a5568;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+        
+        header { text-align: center; margin-bottom: 60px; padding-top: 40px; }
+        h1 { font-size: 2.5rem; margin-bottom: 15px; color: var(--text-color); line-height: 1.2; }
+        .subtitle { font-size: 1.2rem; opacity: 0.8; max-width: 600px; margin: 0 auto; }
+        
+        section { margin-bottom: 50px; }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; border-left: 4px solid var(--accent-color); padding-left: 12px; }
+        
+        .grid { display: block; }
+        .card { 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid var(--border-color);
+        }
+        .card h3 { margin-bottom: 8px; color: var(--accent-color); }
+        
+        .cta-box { 
+            text-align: center; 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color);
+            margin-top: 60px;
+        }
+        .btn { 
+            display: inline-block; 
+            background: var(--accent-color); 
+            color: #fff; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-weight: bold; 
+            margin: 10px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: var(--accent-hover); }
+        .btn.secondary { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); }
+        .btn.secondary:hover { background: var(--card-bg); }
+
+        footer { text-align: center; margin-top: 80px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9rem; opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>${hero_title}</h1>
+            <p class="subtitle">${hero_subtitle}</p>
+        </header>
+
+        <main>
+            <section id="about">
+                <h2>${about_title}</h2>
+                <p>${about_text}</p>
+            </section>
+
+            <section id="services">
+                <h2>${services_title}</h2>
+                <div class="grid">
+                    ${services_html}
+                </div>
+            </section>
+
+            <section class="cta-box">
+                <h2>${cta_title}</h2>
+                <p style="margin-bottom: 20px;">${cta_text}</p>
+                <a href="mailto:${contact_email}" class="btn">Email</a>
+                <a href="https://t.me/${contact_telegram}" target="_blank" class="btn secondary">Telegram</a>
+            </section>
+        </main>
+
+        <footer>
+            <p>${footer_text}</p>
+        </footer>
+    </div>
+</body>
+</html>
