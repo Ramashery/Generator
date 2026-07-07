@@ -2,77 +2,108 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GitHub-based CMS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Мобильная Админка</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f6f8; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
-        input, textarea { width: 100%; padding: 8px; margin: 10px 0; box-sizing: border-box; }
-        button { background: #2c974b; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; width: 100%; }
+        body { font-family: -apple-system, sans-serif; padding: 15px; background: #f4f6f8; color: #333; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        label { display: block; font-weight: bold; margin-top: 15px; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 12px; margin: 5px 0 15px 0; box-sizing: border-box; border: 1px solid #cbd5e0; border-radius: 8px; font-size: 1rem; }
+        textarea { height: 100px; }
+        button { background: #2c974b; color: white; padding: 14px; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; }
+        button:hover { background: #227c3c; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2>Админка без сервера</h2>
+    <h2>Управление сайтом</h2>
     
-    <label>GitHub Токен (для авторизации):</label>
-    <input type="password" id="token" placeholder="ghp_xxxxxxxxxxxx">
+    <label>GitHub Токен (ghp_...):</label>
+    <input type="password" id="token" placeholder="Вставьте ваш Personal Access Token">
 
-    <hr>
+    <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
 
-    <label>Главный заголовок сайта:</label>
-    <input type="text" id="hero_title">
+    <label>Главный заголовок (Hero Title):</label>
+    <input type="text" id="hero_title" placeholder="Загрузка текущего текста...">
 
-    <label>Описание бизнеса:</label>
-    <textarea id="about_text"></textarea>
+    <label>Описание (About Text):</label>
+    <textarea id="about_text" placeholder="Загрузка текущего текста..."></textarea>
 
     <button onclick="saveToGitHub()">Сохранить изменения</button>
 </div>
 
 <script>
-    // При загрузке страницы JS может сначала запросить текущий content.json через API,
-    // чтобы заполнить поля формы актуальными данными.
+    const repoOwner = "ramashery"; 
+    const repoName = "Generator";
+    const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/content.json`;
+
+    // Автоматическая загрузка текущих данных при входе, чтобы не вводить всё заново
+    async function loadCurrentData() {
+        try {
+            const res = await fetch(url);
+            if(res.ok) {
+                const fileData = await res.json();
+                const currentContent = JSON.parse(atob(fileData.content));
+                document.getElementById('hero_title').value = currentContent.hero_title || '';
+                document.getElementById('about_text').value = currentContent.about_text || '';
+            }
+        } catch (e) {
+            console.log("Не удалось загрузить текущие данные без токена");
+        }
+    }
+    loadCurrentData();
     
     async function saveToGitHub() {
-        const token = document.getElementById('token').value;
+        const token = document.getElementById('token').value.trim();
         const heroTitle = document.getElementById('hero_title').value;
         const aboutText = document.getElementById('about_text').value;
 
-        if(!token) return alert("Введите токен GitHub!");
+        if(!token) return alert("Пожалуйста, введите ваш GitHub Токен!");
 
-        const repoOwner = "ТВОЙ_ЛОГИН_НА_GITHUB";
-        const repoName = "ИМЯ_РЕПОЗИТОРИЯ";
-        const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/content.json`;
+        try {
+            // 1. Получаем текущую версию (sha) файла content.json
+            const getFile = await fetch(url, {
+                headers: { "Authorization": `token ${token}` }
+            });
+            
+            if (!getFile.ok) {
+                const errInfo = await getFile.json();
+                return alert(`Ошибка доступа к репозиторию: ${errInfo.message}. Проверьте правильность токена.`);
+            }
 
-        // 1. Сначала нужно получить текущую версию (sha) файла content.json
-        const getFile = await fetch(url);
-        const fileData = await getFile.json();
-        const sha = fileData.sha;
+            const fileData = await getFile.json();
+            const sha = fileData.sha;
 
-        // 2. Декодируем и обновляем старый JSON новыми данными из полей
-        let currentContent = JSON.parse(atob(fileData.content));
-        currentContent.hero_title = heroTitle;
-        currentContent.about_text = aboutText;
+            // 2. Декодируем старый контент и обновляем нужные поля
+            let currentContent = JSON.parse(atob(fileData.content));
+            currentContent.hero_title = heroTitle;
+            currentContent.about_text = aboutText;
 
-        // 3. Отправляем обновленный файл обратно в GitHub
-        const response = await fetch(url, {
-            method: "PUT",
-            headers: {
-                "Authorization": `token ${token}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: "📝 Обновление контента через admin.html",
-                content: btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2)))),
-                sha: sha
-            })
-        });
+            // 3. Отправляем обновленный JSON обратно в репозиторий
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Authorization": `token ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "📝 Обновление через мобильную админку",
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2)))),
+                    sha: sha
+                })
+            });
 
-        if(response.ok) {
-            alert("Готово! GitHub принял изменения. Через 20 секунд сайт обновится.");
-        } else {
-            alert("Ошибка при сохранении. Проверьте токен.");
+            if(response.ok) {
+                alert("🎉 Успешно! Данные обновлены в GitHub. Подождите примерно 30-40 секунд, робот пересоберет ваш сайт.");
+            } else {
+                const errInfo = await response.json();
+                alert(`GitHub отклонил запись: ${errInfo.message}`);
+            }
+        } catch (error) {
+            alert(`Произошла сетевая ошибка: ${error.message}`);
         }
     }
 </script>
 </body>
 </html>
+
